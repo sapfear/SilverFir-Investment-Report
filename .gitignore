@@ -1,0 +1,5 @@
+# User-specific stuff
+.idea/*
+
+Node.js Release/bond_search_v2/bonds/*
+Node.js Release/bond_search_v2/node_modules/
