@@ -1,37 +1,38 @@
 /**
  * SilverFir: Investment Report 🌲 [Node.js Release]
  * https://fir.icu/
- * 
+ *
  * Модуль поиска облигаций по параметрам [bond_search_v2/index.js]
- * 
+ *
  * Запуск под Linux: $ npm start
  * Запуск под Windows: start.bat
- * Подробности: https://habr.com/ru/post/506720/ 
- * 
+ * Подробности: https://habr.com/ru/post/506720/
+ *
  * Docker fork: https://github.com/supaflyster/SilverFir-Investment-Report
- * 
- * @author Mikhail Shardin [Михаил Шардин] 
+ *
+ * @author Mikhail Shardin [Михаил Шардин]
  * https://www.facebook.com/mikhail.shardin/
- * 
+ *
  * Last updated: 23.05.2020
- * 
+ *
  */
 
-bond_search_v2()
+bond_search_v2();
 
 async function bond_search_v2() {
     let startTime = (new Date()).getTime(); //записываем текущее время в формате Unix Time Stamp - Epoch Converter
     console.log("Функция %s начала работу в %s. \n", getFunctionName(), (new Date()).toLocaleString())
 
-    global.fetch = require("node-fetch")
-    global.fs = require("fs")
+    global.fetch = require("node-fetch");
+    global.fs = require("fs");
 
-    await MOEXsearchBonds()
+    await MOEXsearchBonds();
 
-    let currTime = (new Date()).getTime();
-    let duration = Math.round((currTime - startTime) / 1000 / 60 * 100) / 100; //время выполнения скрипта в минутах
-    console.log("\nФункция %s закончила работу в %s.", getFunctionName(), (new Date()).toLocaleString())
-    console.log("Время выполнения %s в минутах: %s.", getFunctionName(), duration)
+    const currTime = (new Date()).getTime();
+    const duration = Math.round((currTime - startTime) / 1000 / 60 * 100) / 100; //время выполнения скрипта в минутах
+
+    console.log("\nФункция %s закончила работу в %s.", getFunctionName(), (new Date()).toLocaleString());
+    console.log("Время выполнения %s в минутах: %s.", getFunctionName(), duration);
 }
 
 /**
@@ -39,23 +40,25 @@ async function bond_search_v2() {
  */
 
 async function MOEXsearchBonds() { //поиск облигаций по параметрам
-    const YieldMore = 7 //Доходность больше этой цифры
-    const YieldLess = 14 //Доходность меньше этой цифры
-    const PriceMore = 95 //Цена больше этой цифры
-    const PriceLess = 101 //Цена меньше этой цифры
-    const DurationMore = 1 //Дюрация больше этой цифры
-    const DurationLess = 6 //Дюрация меньше этой цифры
-    const VolumeMore = 5000 //Объем сделок за n дней, шт. больше этой цифры
-    const conditions = `<li>${YieldMore}% < Доходность < ${YieldLess}%</li>
-                        <li>${PriceMore}% < Цена < ${PriceLess}%</li>
-                        <li>${DurationMore} мес. < Дюрация < ${DurationLess} мес.</li> 
-                        <li>Объем сделок за n дней > ${VolumeMore} шт.</li>
-                        <li>Поиск в Т0, Т+, Т+ (USD) - Основной режим - безадрес.</li>`
+    const YieldMore = 6; //Доходность больше этой цифры
+    const YieldLess = 20; //Доходность меньше этой цифры
+    const PriceMore = 80; //Цена больше этой цифры
+    const PriceLess = 101; //Цена меньше этой цифры
+    const DurationMore = 1; //Дюрация больше этой цифры
+    const DurationLess = 6; //Дюрация меньше этой цифры
+    const VolumeMore = 2500; //Объем сделок за n дней, шт. больше этой цифры
+    const conditions = `
+        <li>${YieldMore}% < Доходность < ${YieldLess}%</li>
+        <li>${PriceMore}% < Цена < ${PriceLess}%</li>
+        <li>${DurationMore} мес. < Дюрация < ${DurationLess} мес.</li> 
+        <li>Объем сделок за n дней > ${VolumeMore} шт.</li>
+        <li>Поиск в Т0, Т+, Т+ (USD) - Основной режим - безадрес.</li>
+    `;
     var bonds = [
         // ["BondName", "SECID", "BondPrice", "BondVolume", "BondYield", "BondDuration", "BondTax"],
-    ]
-    var count
-    var log = `<li>Поиск начат ${new Date().toLocaleString()}.</li>`
+    ];
+    var count;
+    var log = `<li>Поиск начат ${new Date().toLocaleString()}.</li>`;
     for (const t of [7, 58, 193]) { // https://iss.moex.com/iss/engines/stock/markets/bonds/boardgroups/
         const url = `https://iss.moex.com/iss/engines/stock/markets/bonds/boardgroups/${t}/securities.json?iss.dp=comma&iss.meta=off&iss.only=securities,marketdata&securities.columns=SECID,SECNAME,PREVLEGALCLOSEPRICE&marketdata.columns=SECID,YIELD,DURATION`
         console.log('%s. Ссылка поиска всех доступных облигаций группы: %s', getFunctionName(), url)
@@ -77,7 +80,7 @@ async function MOEXsearchBonds() { //поиск облигаций по пара
                 SECID = json.securities.data[i][0]
                 BondPrice = json.securities.data[i][2]
                 BondYield = json.marketdata.data[i][1]
-                BondDuration = Math.floor((json.marketdata.data[i][2] / 30) * 100) / 100 // кол-во оставшихся месяцев 
+                BondDuration = Math.floor((json.marketdata.data[i][2] / 30) * 100) / 100 // кол-во оставшихся месяцев
                 console.log('%s. Работа со строкой %s из %s: %s (%s).', getFunctionName(), (i + 1), count, BondName, SECID)
                 log += '<li>Работа со строкой ' + (i + 1) + ' из ' + count + ': ' + SECID + ' (' + BondYield + '%, ' + BondPrice + ').</li>'
                 if (BondYield > YieldMore && BondYield < YieldLess && //условия выборки
@@ -94,14 +97,16 @@ async function MOEXsearchBonds() { //поиск облигаций по пара
                 }
             }
         } catch (e) {
-            console.log('Ошибка в %s', getFunctionName())
-            log += '<li>Ошибка в  ' + getFunctionName() + '.</li>'
+            console.log('Ошибка в %s', getFunctionName());
+
+            log += '<li>Ошибка в ' + getFunctionName() + '.</li>'
         }
     }
-    if (bonds == 0) {
-        return "В массиве нет строк"
+    if (bonds.length === 0) {
+        return 'В массиве нет строк';
     }
-    await HTMLgenerate(bonds, conditions, log)
+
+    await HTMLgenerate(bonds, conditions, log);
 }
 module.exports.MOEXsearchBonds = MOEXsearchBonds;
 
@@ -110,16 +115,19 @@ module.exports.MOEXsearchBonds = MOEXsearchBonds;
  */
 
 async function MOEXsearchTax(ID) { //налоговые льготы для корпоративных облигаций, выпущенных с 1 января 2017 года
-    const url = `https://iss.moex.com/iss/securities/${ID}.json?iss.meta=off&iss.only=description`
-    console.log('%s. Ссылка для %s: %s', getFunctionName(), ID, url)
+    const url = `https://iss.moex.com/iss/securities/${ID}.json?iss.meta=off&iss.only=description`;
+
+    console.log('%s. Ссылка для %s: %s', getFunctionName(), ID, url);
+
     try {
-        const response = await fetch(url)
-        const json = await response.json()
+        const response = await fetch(url);
+        const json = await response.json();
         STARTDATEMOEX = json.description.data.find(e => e[0] === 'STARTDATEMOEX')[2];
         // DAYSTOREDEMPTION = json.description.data.find(e => e[0] === 'DAYSTOREDEMPTION')[2]; //получение кол-ва оставшихся дней по погашения
         console.log("%s. Дата принятия решения о включении ценной бумаги в Список для %s: %s.", getFunctionName(), ID, STARTDATEMOEX);
-        const trueFalse = new Date(STARTDATEMOEX) > new Date('2017-01-01')
-        return trueFalse
+        const isDateLater = new Date(STARTDATEMOEX) > new Date('2017-01-01');
+
+        return isDateLater;
     } catch (e) {
         console.log('Ошибка в %s', getFunctionName())
     }
@@ -173,6 +181,14 @@ module.exports.MOEXboardID = MOEXboardID;
  * Общие вспомогательные функции
  */
 
+function getGoogleRowString(bonds) {
+    return bonds.map(bond => {
+        bond[1] = `<a href="https://smart-lab.ru/q/bonds/${bond[1]}/" target="_blank">${bond[1]}</a>`;
+
+        return bond;
+    });
+}
+
 async function HTMLgenerate(bonds, conditions, log) { //генерирование HTML https://developers.google.com/chart/interactive/docs/gallery/table?hl=ru
     const hmtl = `
     <!DOCTYPE html>
@@ -199,15 +215,17 @@ async function HTMLgenerate(bonds, conditions, log) { //генерировани
                 data.addColumn('number', 'Дюрация, месяцев');
                 data.addColumn('boolean', 'Есть льгота?');
                 data.addRows(
-                    ${JSON.stringify(bonds).replace(/\"/g, '\'')}
+                    ${JSON.stringify(getGoogleRowString(bonds))}
                 );
                 var table = new google.visualization.Table(document.getElementById('table_div'));
+                
                 table.draw(data, {
                     showRowNumber: true,
                     width: '100%',
                     height: '100%',
                     sortColumn: 3,
-                    sortAscending: false
+                    sortAscending: false,
+                    allowHtml: true
                 });
             }
         </script>
@@ -233,8 +251,9 @@ async function HTMLgenerate(bonds, conditions, log) { //генерировани
         </details>
     </body>
 
-    </html>`
-    fs.writeFileSync(`./bond_search_${new Date().toLocaleString().replace(/\:/g, '-')}.html`, hmtl)
+    </html>`;
+
+    fs.writeFileSync(`./bond_search_${new Date().toLocaleString().replace(/[\:\s]/g, '-')}.html`, hmtl)
 
 }
 module.exports.HTMLgenerate = HTMLgenerate;
@@ -250,10 +269,14 @@ function makeTableHTML(bonds) { //генерируем html таблицу из 
             <td>Дюрация, месяцев</td>
             <td>Есть льгота?</td>
         </tr>`
-    for (var i = 0; i < bonds.length; i++) {
+    for (let i = 0; i < bonds.length; i++) {
         result += "<tr>";
-        for (var j = 0; j < bonds[i].length; j++) {
-            result += '<td style="border: 1px solid green;">' + bonds[i][j] + "</td>";
+        for (let j = 0; j < bonds[i].length; j++) {
+            if (j === 1) {
+                result += `<td style="border: 1px solid green;"><a href="https://smart-lab.ru/q/bonds/${bonds[i][j]}/">${bonds[i][j]}</a></td>`;
+            } else {
+                result += `<td style="border: 1px solid green;">${bonds[i][j]}</td>`;
+            }
         }
         result += "</tr>";
     }
